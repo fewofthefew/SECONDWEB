@@ -1,0 +1,411 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&family=VT323&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body-wrap {
+    display: block;
+  }
+
+  .puzzle-wrap {
+    background: #0a0a0f;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ff88;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,136,0.015) 2px,
+      rgba(0,255,136,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .title {
+    font-family: 'VT323', monospace;
+    font-size: 2.6rem;
+    color: #00ff88;
+    text-align: center;
+    text-shadow: 0 0 10px #00ff88, 0 0 30px rgba(0,255,136,0.3);
+    letter-spacing: 2px;
+    margin-bottom: 0.3rem;
+    animation: flicker 4s infinite;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    color: #ff2d78;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 8px #ff2d78;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(0,255,136,0.2);
+    margin: 1.5rem 0;
+  }
+
+  .clue-box {
+    border: 1px solid rgba(0,255,136,0.3);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    background: rgba(0,255,136,0.04);
+    position: relative;
+  }
+
+  .clue-label {
+    font-size: 0.7rem;
+    color: #ff2d78;
+    letter-spacing: 3px;
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+  }
+
+  .clue-text {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: #c8ffe8;
+    font-style: italic;
+  }
+
+  .clue-text span {
+    color: #00ff88;
+    font-style: normal;
+    font-weight: bold;
+  }
+
+  .cipher-box {
+    border: 1px solid rgba(0,255,136,0.3);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    background: rgba(0,20,10,0.6);
+  }
+
+  .cipher-label {
+    font-size: 0.7rem;
+    color: #ff2d78;
+    letter-spacing: 3px;
+    margin-bottom: 0.8rem;
+  }
+
+  .cipher-text {
+    font-size: 0.85rem;
+    line-height: 2;
+    color: #55ff99;
+    letter-spacing: 3px;
+    word-break: break-all;
+    text-shadow: 0 0 4px rgba(0,255,136,0.4);
+  }
+
+  .input-section {
+    margin-top: 1.5rem;
+  }
+
+  .input-label {
+    font-size: 0.75rem;
+    color: #aaa;
+    letter-spacing: 2px;
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  #answer-input {
+    flex: 1;
+    background: #0d0d1a;
+    border: 1px solid rgba(0,255,136,0.4);
+    border-radius: 4px;
+    color: #00ff88;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+    letter-spacing: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #answer-input:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 8px rgba(0,255,136,0.2);
+  }
+
+  #answer-input:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  #submit-btn {
+    background: transparent;
+    border: 1px solid #00ff88;
+    color: #00ff88;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  #submit-btn:hover:not(:disabled) {
+    background: rgba(0,255,136,0.1);
+  }
+
+  #submit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+  }
+
+  .counter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0.8rem;
+  }
+
+  .attempt-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00ff88;
+    box-shadow: 0 0 6px #00ff88;
+    transition: all 0.3s;
+  }
+
+  .attempt-dot.used {
+    background: #ff2d78;
+    box-shadow: 0 0 6px #ff2d78;
+  }
+
+  .attempt-dot.dead {
+    background: #333;
+    box-shadow: none;
+  }
+
+  .counter-label {
+    font-size: 0.7rem;
+    color: #666;
+    letter-spacing: 1px;
+    margin-left: 4px;
+  }
+
+  #message-area {
+    margin-top: 1rem;
+    min-height: 1.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+  }
+
+  .msg-wrong {
+    color: #ff2d78;
+    text-shadow: 0 0 6px rgba(255,45,120,0.5);
+  }
+
+  .msg-success {
+    color: #00ff88;
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    line-height: 1.5;
+    text-shadow: 0 0 10px #00ff88;
+    animation: pulse 1s infinite alternate;
+  }
+
+  .msg-locked {
+    color: #ff2d78;
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    text-shadow: 0 0 10px #ff2d78;
+    animation: pulse 0.8s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.7; }
+    97% { opacity: 1; }
+    98% { opacity: 0.6; }
+  }
+
+  @keyframes pulse {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+  }
+
+  .ghost-anim {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 1.5rem;
+    opacity: 0.15;
+    animation: floatghost 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes floatghost {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+</style>
+
+<div class="puzzle-wrap">
+  <div class="scanlines"></div>
+  <div class="content">
+
+    <div class="title">☠ CRYPTOGRAPHY PUZZLE ☠</div>
+    <div class="subtitle">[ ONLY FOR STUPID PEOPLE ]</div>
+
+    <div class="clue-box">
+      <div class="ghost-anim">👻</div>
+      <div class="clue-label">// TRANSMISSION INTERCEPTED</div>
+      <div class="clue-text">
+        "To find the ghost, you must find the start,<br>
+        Look for the <span>beat of a vintage heart</span>.<br>
+        Before the screen, before the wire,<br>
+        <span>Seventy-Six</span> set the world on fire."
+      </div>
+    </div>
+
+    <div class="cipher-box">
+      <div class="cipher-label">// ENCRYPTED MESSAGE :</div>
+      <div class="cipher-text">
+	GVREZXVTUXXAZEEBNGWKTMNTTMBHGLZXIHNCUBCNVVTYREIKX      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="input-section">
+      <span class="input-label">// ENTER DECRYPTED MESSAGE (NO SPACES) :</span>
+      <div class="input-row">
+        <input type="text" id="answer-input" placeholder="YOURANSWER..." autocomplete="off" spellcheck="false" />
+        <button id="submit-btn">SUBMIT ↗</button>
+      </div>
+
+      <div class="counter-row" id="dots-row">
+        <div class="attempt-dot" id="d1"></div>
+        <div class="attempt-dot" id="d2"></div>
+        <div class="attempt-dot" id="d3"></div>
+        <div class="attempt-dot" id="d4"></div>
+        <div class="attempt-dot" id="d5"></div>
+        <span class="counter-label">ATTEMPTS REMAINING<span class="blink">_</span></span>
+      </div>
+
+      <div id="message-area"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const CORRECT = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER"
+    .replace(/\s/g,'');
+
+  const CORRECT_ANSWER = ""
+    .replace(/\s/g,'');
+
+  const SOURCE = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+
+  const CORRECT_CLEAN = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+
+  const RAW = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+  const STRIPPED = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+
+  const FULL = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+
+  const CIPHER_STRIPPED = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+
+  const CIPHER_RAW = "HEYIAMCYBERGIRLCONGRATULATIONSGERFOUTAISSUCHAYAPPER";
+  const ANSWER = CIPHER_RAW.replace(/ /g, '');
+
+  let attempts = 0;
+  const MAX = 5;
+
+  const input = document.getElementById('answer-input');
+  const btn = document.getElementById('submit-btn');
+  const msg = document.getElementById('message-area');
+  const dots = [1,2,3,4,5].map(i => document.getElementById('d'+i));
+
+  function updateDots() {
+    dots.forEach((d, i) => {
+      d.className = 'attempt-dot';
+      if (i < attempts) d.classList.add('used');
+    });
+  }
+
+  function lockDown() {
+    input.disabled = true;
+    btn.disabled = true;
+    input.value = '';
+    dots.forEach(d => { d.className = 'attempt-dot dead'; });
+    msg.className = 'msg-locked';
+    msg.innerHTML = '⛔ ACCESS DENIED. TERMINAL LOCKED.';
+    document.querySelector('.counter-label').textContent = ' SYSTEM LOCKED';
+  }
+
+  btn.addEventListener('click', () => {
+    const val = input.value.trim().toUpperCase().replace(/\s/g, '');
+    if (!val) return;
+
+    if (val === ANSWER) {
+      msg.className = 'msg-success';
+      msg.innerHTML = '✦ CONGRATULATIONS ✦<br>IT IS ME — CYBERGIRL.<br>DON\'T BE HAPPY, YOU TOOK SO LONG BTW.';
+      input.disabled = true;
+      btn.disabled = true;
+      return;
+    }
+
+    attempts++;
+    updateDots();
+    input.value = '';
+
+    const left = MAX - attempts;
+    if (attempts >= MAX) {
+      lockDown();
+      return;
+    }
+
+    msg.className = 'msg-wrong';
+    msg.textContent = '✗ WRONG. ' + left + ' attempt' + (left===1?'':'s') + ' remaining.';
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') btn.click();
+  });
+</script>
